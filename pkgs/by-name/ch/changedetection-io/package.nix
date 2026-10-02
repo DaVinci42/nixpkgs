@@ -1,28 +1,51 @@
 {
   lib,
   fetchFromGitHub,
-  python3,
-  gitUpdater,
+  python3Packages,
 }:
 
-python3.pkgs.buildPythonApplication rec {
+python3Packages.buildPythonApplication (finalAttrs: {
   pname = "changedetection-io";
-  version = "0.53.6";
-  format = "setuptools";
+  version = "0.60.9";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "dgtlmoon";
     repo = "changedetection.io";
-    tag = version;
-    hash = "sha256-j7Dw6PLGt955wfQNriRHGtsJzCd50xpHJK0fqVvzIY4=";
+    tag = finalAttrs.version;
+    hash = "sha256-E7ujQNMG1Qs6NAocAOYP8My8PDfFrI1ejoEIJfvC5VQ=";
   };
 
-  pythonRelaxDeps = true;
+  build-system = [ python3Packages.setuptools ];
 
-  propagatedBuildInputs =
-    with python3.pkgs;
+  pythonRelaxDeps = [
+    "apprise"
+    "chardet"
+    "elementpath"
+    "greenlet"
+    "jsonpath-ng"
+    "puremagic"
+    "pydantic"
+    "pyppeteer-ng"
+    "python-engineio"
+    "selenium"
+    "werkzeug"
+  ];
+
+  pythonRemoveDeps = [
+    # Unpackaged; content_fetchers/puppeteer.py skips stealth injection when unavailable.
+    "pyppeteerstealth"
+    "pytest"
+    "pytest-flask"
+    "pytest-mock"
+    "pytest-xdist"
+  ];
+
+  dependencies =
+    with python3Packages;
     [
       apprise
+      arrow
       babel
       beautifulsoup4
       blinker
@@ -33,11 +56,11 @@ python3.pkgs.buildPythonApplication rec {
       elementpath
       extruct
       feedgen
+      feedparser
       flask
       flask-babel
       flask-compress
       flask-cors
-      flask-expects-json
       flask-login
       flask-paginate
       flask-restful
@@ -46,17 +69,17 @@ python3.pkgs.buildPythonApplication rec {
       gevent
       greenlet
       inscriptis
-      janus
       jinja2
-      jinja2-time
       jq
       jsonpath-ng
       jsonschema
-      levenshtein
+      linkify-it-py
+      litellm
       loguru
       lxml
       openapi-core
       openpyxl
+      orjson
       paho-mqtt
       panzi-json-logic
       playwright
@@ -64,14 +87,17 @@ python3.pkgs.buildPythonApplication rec {
       price-parser
       psutil
       puremagic
+      pydantic
       pyppeteer-ng
-      # pyppeteerstealth
       python-engineio
       python-socketio
       pytz
+      rank-bm25
+      rapidfuzz
       referencing
       requests
       requests-file
+      segno
       selenium
       timeago
       tzdata
@@ -82,22 +108,31 @@ python3.pkgs.buildPythonApplication rec {
     ++ requests.optional-dependencies.socks
     ++ openapi-core.optional-dependencies.flask;
 
-  # tests can currently not be run in one pytest invocation and without docker
-  doCheck = false;
+  # Match unit-tests in upstream .github/workflows/test-stack-reusable-workflow.yml.
+  enabledTestPaths = [
+    "changedetectionio/tests/unit"
+    "changedetectionio/tests/llm"
+  ];
+
+  nativeCheckInputs = with python3Packages; [
+    pytestCheckHook
+    pytest-flask
+    pytest-mock
+  ];
+
+  __darwinAllowLocalNetworking = true;
 
   pythonImportsCheck = [ "changedetectionio" ];
-
-  passthru.updateScript = gitUpdater { };
 
   meta = {
     description = "Self-hosted free open source website change detection tracking, monitoring and notification service";
     homepage = "https://github.com/dgtlmoon/changedetection.io";
-    changelog = "https://github.com/dgtlmoon/changedetection.io/releases/tag/${src.tag}";
-    license = lib.licenses.unfree;
+    changelog = "https://github.com/dgtlmoon/changedetection.io/releases/tag/${finalAttrs.src.tag}";
+    license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [
       mikaelfangel
       thanegill
     ];
     mainProgram = "changedetection.io";
   };
-}
+})

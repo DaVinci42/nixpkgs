@@ -11,16 +11,16 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "biome";
-  version = "2.5.15";
+  version = "2.6.4";
 
   src = fetchFromGitHub {
     owner = "biomejs";
     repo = "biome";
     rev = "@biomejs/biome@${finalAttrs.version}";
-    hash = "sha256-27I1d9cqC0oTMvfef4oYJViIx3QF+3b4WnZIx2gj5c4=";
+    hash = "sha256-/oaXa8UrmKFM431oWMQj1acCgwGwYBn9eTqzlr4xwYs=";
   };
 
-  cargoHash = "sha256-lC4IGhA6TXlmW0rbMvtnFE6R8SH8sI5uHWsS3t48ruQ=";
+  cargoHash = "sha256-U7sufX7qaMZLkq64ct8rgD8O7p5JokCOhnImhzg77GY=";
 
   nativeBuildInputs = [ pkg-config ];
 
@@ -31,6 +31,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   nativeCheckInputs = [ gitMinimal ];
+
+  # The upgrade test starts a local HTTP server.
+  __darwinAllowLocalNetworking = true;
 
   cargoBuildFlags = [ "-p=biome_cli" ];
   cargoTestFlags = finalAttrs.cargoBuildFlags ++ [
